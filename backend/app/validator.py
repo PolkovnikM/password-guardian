@@ -1,56 +1,62 @@
 """
-Модуль для проверки паролей
+Валидатор паролей
 """
 
 import re
 
 class PasswordValidator:
-    def __init__(self):
-        self.common_passwords = [
-            "password", "123456", "qwerty", "admin", "welcome"
-        ]
-    
     def validate(self, password):
-        """Проверка надежности пароля"""
-        checks = {
-            "length_ok": len(password) >= 8,
-            "has_lower": bool(re.search(r'[a-z]', password)),
-            "has_upper": bool(re.search(r'[A-Z]', password)),
-            "has_digit": bool(re.search(r'\d', password)),
-            "has_special": bool(re.search(r'[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]', password)),
-            "not_common": password.lower() not in self.common_passwords,
-        }
+        """Проверяет пароль и возвращает оценку"""
+        score = 0
+        feedback = []
         
-        score = sum(checks.values())
-        
-        if score == 6:
-            strength = "Очень надежный"
-        elif score >= 4:
-            strength = "Надежный"
-        elif score >= 3:
-            strength = "Средний"
+        # Проверка длины
+        if len(password) >= 12:
+            score += 2
+        elif len(password) >= 8:
+            score += 1
+            feedback.append("Пароль должен быть длиннее (рекомендуется 12+ символов)")
         else:
-            strength = "Слабый"
+            feedback.append("Пароль слишком короткий (минимум 8 символов)")
         
-        suggestions = []
-        if not checks["length_ok"]:
-            suggestions.append("Увеличьте длину до 8+ символов")
-        if not checks["has_lower"]:
-            suggestions.append("Добавьте строчные буквы")
-        if not checks["has_upper"]:
-            suggestions.append("Добавьте заглавные буквы")
-        if not checks["has_digit"]:
-            suggestions.append("Добавьте цифры")
-        if not checks["has_special"]:
-            suggestions.append("Добавьте спецсимволы")
-        if not checks["not_common"]:
-            suggestions.append("Используйте более сложную комбинацию")
+        # Проверка на строчные буквы
+        if re.search(r'[a-z]', password):
+            score += 1
+        else:
+            feedback.append("Добавьте строчные буквы (a-z)")
+        
+        # Проверка на заглавные буквы
+        if re.search(r'[A-Z]', password):
+            score += 1
+        else:
+            feedback.append("Добавьте заглавные буквы (A-Z)")
+        
+        # Проверка на цифры
+        if re.search(r'\d', password):
+            score += 1
+        else:
+            feedback.append("Добавьте цифры (0-9)")
+        
+        # Проверка на специальные символы
+        if re.search(r'[!@#$%^&*]', password):
+            score += 1
+        else:
+            feedback.append("Добавьте специальные символы (!@#$%^&*)")
+        
+        # Определяем уровень безопасности
+        if score >= 6:
+            strength = "💪 Очень надежный"
+        elif score >= 4:
+            strength = "👍 Надежный"
+        elif score >= 2:
+            strength = "⚠️  Средний"
+        else:
+            strength = "🚨 Слабый"
         
         return {
             "password": password,
-            "strength": strength,
             "score": score,
             "max_score": 6,
-            "checks": checks,
-            "suggestions": suggestions
+            "strength": strength,
+            "feedback": feedback
         }
