@@ -28,7 +28,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🔐 Password Guardian</h1>
+            <h1> Password Guardian</h1>
             <p>Простой генератор и проверка паролей</p>
         </header>
         
@@ -78,9 +78,9 @@
         </div>
         
         <div class="status">
-            <div id="api-status">Статус API: ✅ Онлайн</div>
+            <div id="api-status">Статус API:  Онлайн</div>
             <p><strong>Password Guardian v1.0</strong></p>
-            <p>Студент: [Ваше Имя] | Группа: [Ваша Группа]</p>
+            <p>Студент: Полковников Максим | Группа: БИВТ-24-4</p>
         </div>
     </div>
 
@@ -131,11 +131,11 @@
                     </div>
                 `;
                 
-                updateStatus('✅ Сгенерирован новый пароль');
+                updateStatus(' Сгенерирован новый пароль');
                 
             } catch (error) {
                 console.error('Ошибка:', error);
-                updateStatus('❌ Ошибка при генерации');
+                updateStatus(' Ошибка при генерации');
             }
         }
 
@@ -166,16 +166,16 @@
                         <ul>
                             ${data.feedback && data.feedback.length > 0 
                                 ? data.feedback.map(item => `<li>${item}</li>`).join('')
-                                : '<li>✅ Все требования выполнены!</li>'}
+                                : '<li> Все требования выполнены!</li>'}
                         </ul>
                     </div>
                 `;
                 
-                updateStatus('✅ Пароль проверен');
+                updateStatus(' Пароль проверен');
                 
             } catch (error) {
                 console.error('Ошибка:', error);
-                updateStatus('❌ Ошибка при проверке');
+                updateStatus(' Ошибка при проверке');
             }
         }
 
@@ -189,7 +189,7 @@
             const statusEl = document.getElementById('api-status');
             statusEl.textContent = message;
             setTimeout(() => {
-                statusEl.textContent = 'Статус API: ✅ Онлайн';
+                statusEl.textContent = 'Статус API:  Онлайн';
             }, 3000);
         }
     </script>
