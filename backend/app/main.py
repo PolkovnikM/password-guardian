@@ -1,5 +1,6 @@
 """
-Главный файл API
+Password Guardian API
+Простой менеджер паролей с генерацией и проверкой
 """
 
 from fastapi import FastAPI
@@ -7,40 +8,53 @@ from fastapi.middleware.cors import CORSMiddleware
 from .generator import PasswordGenerator
 from .validator import PasswordValidator
 
+# Создаем приложение
 app = FastAPI(
-    title="Password Guardian API",
-    description="Генератор и проверка паролей",
+    title="Password Guardian",
+    description="API для генерации и проверки паролей",
     version="1.0.0"
 )
 
 # Разрешаем доступ с фронтенда
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Разрешаем все источники
+    allow_methods=["*"],  # Разрешаем все методы
+    allow_headers=["*"],  # Разрешаем все заголовки
 )
 
-# Создаем экземпляры
+# Создаем генератор и валидатор
 generator = PasswordGenerator()
 validator = PasswordValidator()
 
 @app.get("/")
 def home():
-    return {"message": "Password Guardian API", "version": "1.0.0"}
+    """Главная страница API"""
+    return {
+        "message": "🔐 Password Guardian API",
+        "version": "1.0.0",
+        "endpoints": {
+            "/api/generate": "Генерация пароля (GET параметры: length, lowercase, uppercase, digits, special)",
+            "/api/validate": "Проверка пароля (GET параметр: password)",
+            "/health": "Проверка здоровья сервера"
+        },
+        "docs": "http://localhost:8000/docs"
+    }
 
 @app.get("/health")
-def health():
-    return {"status": "healthy"}
+def health_check():
+    """Проверка работы сервера"""
+    return {"status": "ok", "service": "password-guardian"}
 
 @app.get("/api/generate")
-def generate(
+def generate_password(
     length: int = 12,
     lowercase: bool = True,
     uppercase: bool = True,
     digits: bool = True,
     special: bool = False
 ):
+    """Генерация пароля с настройками"""
     # Генерируем пароль
     result = generator.generate(
         length=length,
@@ -56,11 +70,13 @@ def generate(
     return {
         **result,
         "strength": validation["strength"],
-        "score": validation["score"]
+        "score": validation["score"],
+        "feedback": validation.get("feedback", [])
     }
 
 @app.get("/api/validate")
-def validate(password: str):
+def validate_password(password: str):
+    """Проверка пароля"""
     if not password:
         return {"error": "Введите пароль"}
     
