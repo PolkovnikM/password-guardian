@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Guardian</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-alt"></i> Password Guardian</h1>
+            <p class="subtitle">Простой генератор и проверка паролей</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('generate')">
+                <i class="fas fa-key"></i> Генератор
+            </button>
+            <button class="tab-btn" onclick="switchTab('validate')">
+                <i class="fas fa-check-circle"></i> Проверка
+            </button>
+        </div>
+
+        <div id="generate-tab" class="tab-content active">
+            <div class="card">
+                <h2><i class="fas fa-magic"></i> Создать пароль</h2>
+                
+                <div class="option">
+                    <label>Длина: <span id="length-value">12</span> символов</label>
+                    <input type="range" id="length" min="8" max="32" value="12">
+                </div>
+                
+                <div class="checkboxes">
+                    <label>
+                        <input type="checkbox" id="lowercase" checked>
+                        <i class="fas fa-font"></i> Строчные буквы (a-z)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="uppercase" checked>
+                        <i class="fas fa-text-height"></i> Заглавные буквы (A-Z)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="digits" checked>
+                        <i class="fas fa-hashtag"></i> Цифры (0-9)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="special">
+                        <i class="fas fa-asterisk"></i> Спецсимволы (!@#$)
+                    </label>
+                </div>
+                
+                <button class="btn" onclick="generatePassword()">
+                    <i class="fas fa-bolt"></i> Сгенерировать
+                </button>
+                
+                <div class="result" id="generate-result">
+                    <h3><i class="fas fa-lock"></i> Ваш пароль:</h3>
+                    <div class="password-display">
+                        <input type="text" id="password-output" readonly>
+                        <button class="btn copy-btn" onclick="copyPassword()">
+                            <i class="far fa-copy"></i> Копировать
+                        </button>
+                    </div>
+                    <div class="strength" id="strength-display">
+                        Надежность: <span id="strength-text">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="validate-tab" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-search"></i> Проверить пароль</h2>
+                
+                <div class="input-group">
+                    <input type="password" id="password-input" placeholder="Введите пароль...">
+                    <button class="btn eye-btn" onclick="togglePassword()">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+                
+                <button class="btn" onclick="validatePassword()">
+                    <i class="fas fa-shield-alt"></i> Проверить
+                </button>
+                
+                <div class="result" id="validate-result">
+                    <h3><i class="fas fa-chart-bar"></i> Результат:</h3>
+                    <div class="score">Оценка: <span id="score-value">0/6</span></div>
+                    <div class="strength" id="validate-strength">Уровень: <span id="strength-text-validate">—</span></div>
+                    <div class="suggestions" id="suggestions"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Password Guardian v1.0 | 
+                Статус API: <span id="api-status" class="status">Проверка...</span>
+            </p>
+            <p class="student-info">
+                👨‍🎓 Студент: <span id="student-name">[Впиши свое имя]</span> | 
+                🎓 Группа: <span id="student-group">[Впиши свою группу]</span>
+            </p>
+        </footer>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
