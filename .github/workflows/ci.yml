@@ -17,7 +17,7 @@ jobs:
 
     - name: Check required files
       run: |
-        echo " Проверка структуры проекта..."
+        echo "📁 Проверка структуры проекта..."
 
         required_backend=(
           "backend/requirements.txt"
@@ -29,9 +29,9 @@ jobs:
 
         for file in "${required_backend[@]}"; do
           if [ -f "$file" ]; then
-            echo " $file найден"
+            echo "✅ $file найден"
           else
-            echo " $file не найден"
+            echo "❌ $file не найден"
             exit 1
           fi
         done
@@ -42,14 +42,14 @@ jobs:
 
         for file in "${required_frontend[@]}"; do
           if [ -f "$file" ]; then
-            echo " $file найден"
+            echo "✅ $file найден"
           else
-            echo " $file не найден"
+            echo "❌ $file не найден"
             exit 1
           fi
         done
 
-        echo " Структура проекта корректна"
+        echo "✅ Структура проекта корректна"
 
   backend-lint:
     name: Backend lint and test
@@ -75,31 +75,34 @@ jobs:
     - name: Lint with flake8
       working-directory: backend
       run: |
-        echo " Проверка стиля кода Python..."
+        echo "🔍 Проверка стиля кода Python..."
         flake8 app/ --select=E9,F63,F7,F82 --show-source --statistics
         flake8 app/ --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # 🔽 🔽 🔽 ВОТ ЗДЕСЬ БЫЛА ОШИБКА — ЭТО ИСПРАВЛЕНИЕ
     - name: Simple Python tests
       working-directory: backend
       run: |
         echo "🧪 Запуск простых тестов..."
 
-python - << 'EOF'
+        python - << 'EOF'
 from app.generator import PasswordGenerator
 from app.validator import PasswordValidator
 
-print(" Модули импортируются корректно")
+print("✅ Модули импортируются корректно")
 
 g = PasswordGenerator()
 result = g.generate(12)
 assert "password" in result
+print(f"✅ Генератор работает. Пароль: {result['password']}")
 
 v = PasswordValidator()
 result = v.validate("Test123!")
 assert "strength" in result
+print(f"✅ Валидатор работает. Сила: {result['strength']}")
 EOF
 
-
-        echo " Все базовые тесты пройдены"
+        echo "✅ Все базовые тесты пройдены"
 
   backend-build:
     name: Backend build check
@@ -122,7 +125,7 @@ EOF
     - name: Check server startup
       working-directory: backend
       run: |
-        echo " Проверка запуска сервера..."
+        echo "🚀 Проверка запуска сервера..."
 
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         SERVER_PID=$!
@@ -130,9 +133,9 @@ EOF
         sleep 3
 
         if curl -f http://localhost:8000/health; then
-          echo "Сервер запущен и отвечает"
+          echo "✅ Сервер запущен и отвечает"
         else
-          echo "Сервер не отвечает"
+          echo "❌ Сервер не отвечает"
           exit 1
         fi
 
@@ -149,16 +152,16 @@ EOF
 
     - name: Check HTML validity
       run: |
-        echo " Проверка фронтенда..."
+        echo "🔍 Проверка фронтенда..."
 
         if [ -f "frontend/index.html" ]; then
-          echo " index.html найден"
+          echo "✅ index.html найден"
         else
-          echo " index.html не найден"
+          echo "❌ index.html не найден"
           exit 1
         fi
 
-        echo " Фронтенд проверен"
+        echo "✅ Фронтенд проверен"
 
   success:
     name: Final success
@@ -168,5 +171,5 @@ EOF
     steps:
     - name: Project summary
       run: |
-        echo " ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!"
+        echo "🎉 ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!"
         echo "Password Guardian успешно прошел CI pipeline"
