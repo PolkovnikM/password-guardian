@@ -30,14 +30,14 @@ jobs:
       - name: Backend lint (flake8)
         working-directory: backend
         run: |
-          echo "🔍 Lint backend code"
+          echo "Lint backend code"
           flake8 app/ --select=E9,F63,F7,F82 --show-source --statistics
           flake8 app/ --exit-zero --max-line-length=127 --statistics
 
       - name: Backend basic tests
         working-directory: backend
         run: |
-          echo "🧪 Run backend basic tests"
+          echo "Run backend basic tests"
           
           # Простая проверка что модули импортируются и методы работают
           python -c "
@@ -45,34 +45,34 @@ jobs:
           from app.generator import PasswordGenerator
           from app.validator import PasswordValidator
           
-          print('✅ Modules imported successfully')
+          print('Modules imported successfully')
           
           # Создание объектов
           generator = PasswordGenerator()
           validator = PasswordValidator()
           
-          print('✅ Objects created successfully')
+          print('Objects created successfully')
           
           # Генерация пароля
           gen_result = generator.generate(12)
-          print(f'✅ Password generated: {gen_result}')
+          print(f'Password generated: {gen_result}')
           
           # Проверка пароля
           val_result = validator.validate('Test123!')
-          print(f'✅ Password validated: {val_result}')
+          print(f'Password validated: {val_result}')
           
-          print('✅ All backend tests passed')
+          print('All backend tests passed')
           "
 
       - name: Backend build check
         working-directory: backend
         run: |
-          echo "🚀 Check backend startup"
+          echo "Check backend startup"
           uvicorn app.main:app --host 127.0.0.1 --port 8000 &
           PID=$!
           sleep 3
           kill $PID || true
-          echo "✅ Backend starts successfully"
+          echo "Backend starts successfully"
 
   frontend-ci:
     name: Frontend CI
@@ -84,25 +84,25 @@ jobs:
 
       - name: Frontend structure check
         run: |
-          echo "🌐 Check frontend files"
+          echo "Check frontend files"
 
           if [ ! -f frontend/index.html ]; then
-            echo "❌ frontend/index.html not found"
+            echo "frontend/index.html not found"
             exit 1
           fi
 
-          echo "✅ frontend/index.html exists"
+          echo "frontend/index.html exists"
 
           if grep -q "<!DOCTYPE html>" frontend/index.html; then
-            echo "✅ HTML doctype found"
+            echo "HTML doctype found"
           else
-            echo "⚠️ HTML doctype not found"
+            echo "HTML doctype not found"
           fi
 
           if grep -q "<title>" frontend/index.html; then
-            echo "✅ HTML title found"
+            echo "HTML title found"
           else
-            echo "⚠️ HTML title not found"
+            echo "HTML title not found"
           fi
 
-          echo "✅ Frontend check finished"
+          echo "Frontend check finished"
