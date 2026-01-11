@@ -16,35 +16,31 @@ jobs:
     
     - name: Display structure
       run: |
-        echo " Структура проекта:"
+        echo "Структура проекта:"
         find . -type f -name "*.py" -o -name "*.html" -o -name "*.css" -o -name "*.js" | sort
         echo ""
-        echo "✅ Проверка структуры завершена"
+        echo "Проверка структуры завершена"
     
-    - name: Check Python files
+    - name: Check required files
       run: |
-        if [ -f "backend/app/main.py" ]; then
-          echo "✅ main.py найден"
-        else
-          echo "❌ main.py не найден"
-          exit 1
-        fi
+        required_files=(
+          "backend/app/main.py"
+          "backend/app/generator.py"
+          "backend/app/validator.py"
+          "frontend/index.html"
+          "README.md"
+        )
         
-        if [ -f "backend/app/generator.py" ]; then
-          echo "✅ generator.py найден"
-        else
-          echo "❌ generator.py не найден"
-          exit 1
-        fi
-        
-        if [ -f "backend/app/validator.py" ]; then
-          echo "✅ validator.py найден"
-        else
-          echo "❌ validator.py не найден"
-          exit 1
-        fi
+        for file in "${required_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file найден"
+          else
+            echo "❌ $file не найден"
+            exit 1
+          fi
+        done
 
-  simple-test:
+  python-lint:
     runs-on: ubuntu-latest
     needs: check-structure
     
@@ -52,12 +48,131 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
-    - name: Display success
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install linter
+      run: pip install flake8
+    
+    - name: Lint Python files
       run: |
-        echo " Все проверки пройдены!"
-        echo "Проект Password Guardian готов к работе."
+        echo "🔍 Проверка стиля кода Python..."
+        cd backend
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        echo "Линтинг завершен"
+
+  python-test:
+    runs-on: ubuntu-latest
+    needs: python-lint
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install pytest
+    
+    - name: Run simple tests
+      run: |
+        echo "🧪 Запуск тестов..."
+        cd backend
+        
+        # Тест 1: Проверка импорта модулей
+        python -c "
+from app.generator import PasswordGenerator
+from app.validator import PasswordValidator
+print('Модули импортируются корректно')
+        "
+        
+        # Тест 2: Проверка генерации пароля
+        python -c "
+from app.generator import PasswordGenerator
+g = PasswordGenerator()
+result = g.generate(12)
+assert 'password' in result
+assert len(result['password']) == 12
+print(f'Генератор работает: {result[\"password\"]}')
+        "
+        
+        # Тест 3: Проверка валидации
+        python -c "
+from app.validator import PasswordValidator
+v = PasswordValidator()
+result = v.validate('Test123!')
+assert 'strength' in result
+assert 'score' in result
+print(f'Валидатор работает. Оценка: {result[\"score\"]}')
+        "
+        
+        echo "Все базовые тесты пройдены"
+
+  build-check:
+    runs-on: ubuntu-latest
+    needs: python-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+    
+    - name: Check if server starts
+      run: |
+        echo "Проверка запуска сервера..."
+        cd backend
+        
+        # Запускаем сервер в фоне
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        SERVER_PID=$!
+        
+        # Даем время на запуск
+        sleep 3
+        
+        # Проверяем здоровье
+        if curl -f http://localhost:8000/health; then
+          echo "Сервер запущен и отвечает"
+        else
+          echo "Сервер не отвечает"
+          exit 1
+        fi
+        
+        # Останавливаем сервер
+        kill $SERVER_PID 2>/dev/null || true
+        sleep 1
+
+  success:
+    runs-on: ubuntu-latest
+    needs: [check-structure, python-lint, python-test, build-check]
+    
+    steps:
+    - name: Final report
+      run: |
+        echo "🎉 ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!"
         echo ""
-        echo " Статистика:"
+        echo "Статистика проекта:"
         echo "- Python файлов: $(find . -name "*.py" | wc -l)"
-        echo "- HTML файлов: $(find . -name "*.html" | wc -l)"
+        echo "- HTML/CSS/JS файлов: $(find . -name "*.html" -o -name "*.css" -o -name "*.js" | wc -l)"
         echo "- Всего файлов: $(find . -type f | wc -l)"
+        echo ""
+        echo "Проект готов к работе"
+        echo "API: http://localhost:8000"
+        echo "Frontend: frontend/index.html"
