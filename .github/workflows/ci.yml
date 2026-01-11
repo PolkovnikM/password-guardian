@@ -39,21 +39,30 @@ jobs:
         run: |
           echo "🧪 Run backend basic tests"
 
-          python - << 'EOF'
-from app.generator import PasswordGenerator
-from app.validator import PasswordValidator
+          python -c "
+          from app.generator import PasswordGenerator
+          from app.validator import PasswordValidator
 
-generator = PasswordGenerator()
-generated = generator.generate(12)
-assert "password" in generated
+          # Test PasswordGenerator
+          generator = PasswordGenerator()
+          generated_password = generator.generate(12)
 
-validator = PasswordValidator()
-validated = validator.validate("Test123!")
-assert "strength" in validated
+          # Check that password is generated and has correct length
+          assert isinstance(generated_password, str), 'Generated password should be a string'
+          assert len(generated_password) == 12, f'Password should be 12 chars long, got {len(generated_password)}'
+          print(f'✅ Password generated: {generated_password}')
 
-print("✅ Backend basic tests passed")
-EOF
+          # Test PasswordValidator
+          validator = PasswordValidator()
+          validation_result = validator.validate('Test123!')
 
+          # Check that validation returns a dictionary with expected structure
+          assert isinstance(validation_result, dict), 'Validation result should be a dictionary'
+          assert 'strength' in validation_result, 'Validation result should contain strength key'
+          print(f'✅ Validation result: {validation_result}')
+
+          print('✅ Backend basic tests passed')
+          "
       - name: Backend build check
         working-directory: backend
         run: |
