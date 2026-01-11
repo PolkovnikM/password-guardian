@@ -2,6 +2,7 @@
 Простой и эффективный генератор паролей с проверкой надежности. Веб-приложение для создания безопасных паролей и оценки существующих.
 
 Студент: Полковников Максим Олегович
+
 Группа: БИВТ-24-4 
 
 ## Описание проекта
@@ -30,3 +31,58 @@ Password Guardian - это полнофункциональное веб-при�
    ```bash
    git clone https://github.com/PolkovnikM/password-guardian.git
    cd password-guardian
+   
+### Настройка бэкенда
+```bash
+
+cd backend
+
+py -m pip install -r requirements.txt
+
+py -m uvicorn app.main:app --reload
+
+```
+
+###  Структура проекта
+
+password-guardian/
+
+├── .github/
+
+│   └── workflows/
+
+│       └── ci.yml                    # CI/CD пайплайн
+
+├── backend/                          # Python бэкенд
+
+│   ├── app/
+
+│   │   ├── __init__.py              # Инициализация пакета
+
+│   │   ├── main.py                  # Основной файл API
+
+│   │   ├── generator.py             # Логика генерации паролей
+
+│   │   └── validator.py             # Логика проверки паролей
+
+│   └── requirements.txt             # Зависимости Python
+
+├── frontend/                        # Веб-интерфейс
+
+│   ├── css/
+
+│   │   └── style.css               # Стили приложения
+
+│   ├── js/
+
+│   │   ├── script.js               # Основная логика фронтенда
+
+│   │   ├── api.js                  # Работа с API бэкенда
+
+│   │   └── utils.js                # Вспомогательные функции
+
+│   └── index.html                  # Главная страница
+
+├── .gitignore                      # Игнорируемые файлы Git
+
+└── README.md                       # Документация проекта
