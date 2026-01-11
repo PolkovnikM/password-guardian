@@ -99,12 +99,18 @@
         }
 
         async function generatePassword() {
-            const length = document.getElementById('length-slider').value;
             const lowercase = document.getElementById('lowercase').checked;
             const uppercase = document.getElementById('uppercase').checked;
             const digits = document.getElementById('digits').checked;
             const special = document.getElementById('special').checked;
             
+            // Проверяем что выбрана хотя бы одна галочка
+            if (!lowercase && !uppercase && !digits && !special) {
+                alert('ОШИБКА! Выберите хотя бы один тип символов.');
+                return; 
+            }
+            
+            const length = document.getElementById('length-slider').value;
             try {
                 const response = await fetch(
                     `http://localhost:8000/api/generate?length=${length}` +
