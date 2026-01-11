@@ -2,11 +2,13 @@
  * Основной файл фронтенда
  */
 
+// Глобальные переменные
+let currentTab = 'generate';
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     initApp();
 });
-
 
 async function initApp() {
     // Настраиваем слайдер длины
@@ -15,40 +17,36 @@ async function initApp() {
     // Проверяем API
     await checkApiStatus();
     
-    // Генерируем первый пароль
-    setTimeout(generatePassword, 1000);
-    
     // Заполняем информацию о студенте
     document.getElementById('student-name').textContent = '[Твое Имя]';
     document.getElementById('student-group').textContent = '[Твоя Группа]';
 }
 
-// Настройка слайдера длины
 function setupLengthSlider() {
     const slider = document.getElementById('length');
     const valueDisplay = document.getElementById('length-value');
     
-    slider.addEventListener('input', function() {
-        valueDisplay.textContent = this.value;
-    });
+    if (slider && valueDisplay) {
+        slider.addEventListener('input', function() {
+            valueDisplay.textContent = this.value;
+        });
+    }
 }
 
-// Проверка статуса API
 async function checkApiStatus() {
     const statusElement = document.getElementById('api-status');
+    if (!statusElement) return;
     
     try {
-        const isOnline = await passwordAPI.checkStatus();
-        
-        if (isOnline) {
-            statusElement.textContent = '✅ Онлайн';
+        const response = await fetch('http://localhost:8000/health');
+        if (response.ok) {
+            statusElement.textContent = ' Онлайн';
             statusElement.className = 'status online';
         } else {
-            statusElement.textContent = '❌ Офлайн';
-            statusElement.className = 'status offline';
+            throw new Error();
         }
     } catch (error) {
-        statusElement.textContent = '❌ Ошибка';
+        statusElement.textContent = ' Офлайн';
         statusElement.className = 'status offline';
     }
 }
@@ -66,60 +64,69 @@ function switchTab(tabName) {
     });
     
     // Показываем нужную вкладку
-    document.getElementById(`${tabName}-tab`).classList.add('active');
+    const tab = document.getElementById(tabName + '-tab');
+    if (tab) {
+        tab.classList.add('active');
+    }
     
     // Активируем кнопку
-    event.currentTarget.classList.add('active');
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+    
+    currentTab = tabName;
 }
 
 // Генерация пароля
 async function generatePassword() {
-    const generateBtn = document.querySelector('.btn[onclick="generatePassword()"]');
-    const originalText = generateBtn.innerHTML;
+    // === ВАЖНО: ПРОВЕРКА ГАЛОЧЕК ===
     const lowercase = document.getElementById('lowercase').checked;
     const uppercase = document.getElementById('uppercase').checked;
     const digits = document.getElementById('digits').checked;
     const special = document.getElementById('special').checked;
     
+    // Проверяем что выбрана хотя бы одна галочка
     if (!lowercase && !uppercase && !digits && !special) {
-        alert('Ошибка: Выберите хотя бы один тип символов!');
-        return;
+        alert(' Ошибка! Выберите хотя бы один тип символов.');
+        return; // Выходим из функции
     }
+    
+    const length = parseInt(document.getElementById('length').value);
     const generateBtn = document.querySelector('.btn[onclick="generatePassword()"]');
+    
+    if (!generateBtn) return;
+    
+    const originalText = generateBtn.innerHTML;
     
     try {
         // Показываем индикатор загрузки
-        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
+        generateBtn.innerHTML = '⏳ Генерация...';
         generateBtn.disabled = true;
         
-        // Получаем настройки
-        const options = {
-            length: parseInt(document.getElementById('length').value),
-            lowercase: document.getElementById('lowercase').checked,
-            uppercase: document.getElementById('uppercase').checked,
-            digits: document.getElementById('digits').checked,
-            special: document.getElementById('special').checked
-        };
+        // Собираем параметры для API
+        const params = new URLSearchParams({
+            length: length,
+            lowercase: lowercase,
+            uppercase: uppercase,
+            digits: digits,
+            special: special
+        });
         
-        // Проверяем, что выбран хотя бы один тип символов
-        if (!options.lowercase && !options.uppercase && !options.digits && !options.special) {
-            utils.showNotification('Выберите хотя бы один тип символов!', 'error');
-            return;
+        // Отправляем запрос
+        const response = await fetch('http://localhost:8000/api/generate?' + params);
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
         }
         
-        // Генерируем пароль
-        const result = await passwordAPI.generatePassword(options);
+        const data = await response.json();
         
         // Показываем результат
-        showGeneratedPassword(result);
-        
-        // Уведомление
-        utils.showNotification('Пароль сгенерирован!', 'success');
+        showGeneratedPassword(data);
         
     } catch (error) {
         console.error('Ошибка:', error);
-        utils.showNotification('Не удалось сгенерировать пароль. Запущен ли бэкенд?', 'error');
-        
+        alert('Не удалось сгенерировать пароль. Проверьте, запущен ли сервер.');
     } finally {
         // Восстанавливаем кнопку
         generateBtn.innerHTML = originalText;
@@ -129,61 +136,71 @@ async function generatePassword() {
 
 // Показ сгенерированного пароля
 function showGeneratedPassword(data) {
+    const passwordOutput = document.getElementById('password-output');
+    const strengthText = document.getElementById('strength-text');
+    const strengthDisplay = document.getElementById('strength-display');
+    const resultDiv = document.getElementById('generate-result');
+    
+    if (!passwordOutput || !strengthText || !strengthDisplay || !resultDiv) return;
+    
     // Показываем пароль
-    document.getElementById('password-output').value = data.password;
+    passwordOutput.value = data.password || '';
     
     // Показываем надежность
-    const strengthText = document.getElementById('strength-text');
-    strengthText.textContent = utils.formatStrength(data.strength);
+    strengthText.textContent = data.strength || 'Неизвестно';
     
-    // Настраиваем индикатор
-    const strengthDisplay = document.getElementById('strength-display');
+    // Настраиваем цвет индикатора
     strengthDisplay.className = 'strength ';
+    const strength = (data.strength || '').toLowerCase();
     
-    if (data.strength.includes('Очень надежный') || data.strength.includes('Надежный')) {
+    if (strength.includes('очень надежный') || strength.includes('надежный')) {
         strengthDisplay.classList.add('strength-strong');
-    } else if (data.strength.includes('Средний')) {
+    } else if (strength.includes('средний')) {
         strengthDisplay.classList.add('strength-medium');
     } else {
         strengthDisplay.classList.add('strength-weak');
     }
     
     // Показываем результат
-    document.getElementById('generate-result').classList.add('active');
+    resultDiv.classList.add('active');
 }
 
 // Проверка пароля
 async function validatePassword() {
-    const validateBtn = document.querySelector('.btn[onclick="validatePassword()"]');
     const passwordInput = document.getElementById('password-input');
-    const password = passwordInput.value.trim();
+    const password = passwordInput ? passwordInput.value.trim() : '';
     
     if (!password) {
-        utils.showNotification('Введите пароль для проверки!', 'error');
-        passwordInput.focus();
+        alert('Введите пароль для проверки!');
+        if (passwordInput) passwordInput.focus();
         return;
     }
+    
+    const validateBtn = document.querySelector('.btn[onclick="validatePassword()"]');
+    if (!validateBtn) return;
     
     const originalText = validateBtn.innerHTML;
     
     try {
         // Показываем индикатор
-        validateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
+        validateBtn.innerHTML = ' Проверка...';
         validateBtn.disabled = true;
         
-        // Проверяем пароль
-        const result = await passwordAPI.validatePassword(password);
+        // Отправляем запрос
+        const response = await fetch('http://localhost:8000/api/validate?password=' + encodeURIComponent(password));
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         // Показываем результат
-        showValidationResult(result);
-        
-        // Уведомление
-        utils.showNotification('Пароль проверен!', 'success');
+        showValidationResult(data);
         
     } catch (error) {
         console.error('Ошибка:', error);
-        utils.showNotification('Не удалось проверить пароль', 'error');
-        
+        alert('Не удалось проверить пароль');
     } finally {
         // Восстанавливаем кнопку
         validateBtn.innerHTML = originalText;
@@ -193,30 +210,34 @@ async function validatePassword() {
 
 // Показ результата проверки
 function showValidationResult(data) {
+    const scoreValue = document.getElementById('score-value');
+    const validateStrengthText = document.getElementById('strength-text-validate');
+    const validateStrength = document.getElementById('validate-strength');
+    const suggestionsDiv = document.getElementById('suggestions');
+    const resultDiv = document.getElementById('validate-result');
+    
+    if (!scoreValue || !validateStrengthText || !validateStrength || !suggestionsDiv || !resultDiv) return;
+    
     // Показываем оценку
-    document.getElementById('score-value').textContent = 
-        utils.formatScore(data.score, data.max_score);
+    scoreValue.textContent = (data.score || 0) + '/' + (data.max_score || 6);
     
     // Показываем надежность
-    const strengthText = document.getElementById('strength-text-validate');
-    strengthText.textContent = utils.formatStrength(data.strength);
+    validateStrengthText.textContent = data.strength || 'Неизвестно';
     
-    // Настраиваем индикатор
-    const strengthDisplay = document.getElementById('validate-strength');
-    strengthDisplay.className = 'strength ';
+    // Настраиваем цвет индикатора
+    validateStrength.className = 'strength ';
+    const strength = (data.strength || '').toLowerCase();
     
-    if (data.strength.includes('Очень надежный') || data.strength.includes('Надежный')) {
-        strengthDisplay.classList.add('strength-strong');
-    } else if (data.strength.includes('Средний')) {
-        strengthDisplay.classList.add('strength-medium');
+    if (strength.includes('очень надежный') || strength.includes('надежный')) {
+        validateStrength.classList.add('strength-strong');
+    } else if (strength.includes('средний')) {
+        validateStrength.classList.add('strength-medium');
     } else {
-        strengthDisplay.classList.add('strength-weak');
+        validateStrength.classList.add('strength-weak');
     }
     
     // Показываем рекомендации
-    const suggestionsDiv = document.getElementById('suggestions');
-    suggestionsDiv.innerHTML = '<h4><i class="fas fa-lightbulb"></i> Рекомендации:</h4>';
-    
+    suggestionsDiv.innerHTML = '';
     if (data.suggestions && data.suggestions.length > 0) {
         const ul = document.createElement('ul');
         data.suggestions.forEach(suggestion => {
@@ -227,41 +248,52 @@ function showValidationResult(data) {
         suggestionsDiv.appendChild(ul);
     } else {
         const p = document.createElement('p');
-        p.textContent = 'Отличный пароль! Все требования выполнены.';
-        p.style.color = '#48bb78';
+        p.textContent = 'Отличный пароль!';
+        p.style.color = 'green';
         p.style.fontWeight = 'bold';
         suggestionsDiv.appendChild(p);
     }
     
     // Показываем результат
-    document.getElementById('validate-result').classList.add('active');
+    resultDiv.classList.add('active');
 }
 
 // Копирование пароля
-async function copyPassword() {
+function copyPassword() {
     const passwordField = document.getElementById('password-output');
+    if (!passwordField || !passwordField.value) {
+        alert('Сначала сгенерируйте пароль!');
+        return;
+    }
     
     try {
-        await navigator.clipboard.writeText(passwordField.value);
-        utils.showNotification('Пароль скопирован!', 'success');
-    } catch (error) {
-        // Fallback для старых браузеров
         passwordField.select();
         document.execCommand('copy');
-        utils.showNotification('Пароль скопирован (старый метод)', 'success');
+        alert(' Пароль скопирован в буфер обмена!');
+    } catch (error) {
+        console.error('Ошибка копирования:', error);
+        alert('Не удалось скопировать пароль');
     }
 }
 
 // Переключение видимости пароля
 function togglePassword() {
     const passwordInput = document.getElementById('password-input');
-    const eyeIcon = event.currentTarget.querySelector('i');
+    const eyeBtn = event ? event.currentTarget : null;
+    
+    if (!passwordInput) return;
     
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
-        eyeIcon.className = 'far fa-eye-slash';
+        if (eyeBtn) {
+            const icon = eyeBtn.querySelector('i');
+            if (icon) icon.className = 'far fa-eye-slash';
+        }
     } else {
         passwordInput.type = 'password';
-        eyeIcon.className = 'far fa-eye';
+        if (eyeBtn) {
+            const icon = eyeBtn.querySelector('i');
+            if (icon) icon.className = 'far fa-eye';
+        }
     }
 }
