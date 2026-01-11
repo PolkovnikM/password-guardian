@@ -6,18 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     initApp();
 });
-async function generatePassword() {
-    const lowercase = document.getElementById('lowercase').checked;
-    const uppercase = document.getElementById('uppercase').checked;
-    const digits = document.getElementById('digits').checked;
-    const special = document.getElementById('special').checked;
-    
-    if (!lowercase && !uppercase && !digits && !special) {
-        alert('Ошибка: Выберите хотя бы один тип символов!');
-        return;
-    }
-    const generateBtn = document.querySelector('.btn[onclick="generatePassword()"]');
-}
+
 
 async function initApp() {
     // Настраиваем слайдер длины
@@ -87,6 +76,16 @@ function switchTab(tabName) {
 async function generatePassword() {
     const generateBtn = document.querySelector('.btn[onclick="generatePassword()"]');
     const originalText = generateBtn.innerHTML;
+    const lowercase = document.getElementById('lowercase').checked;
+    const uppercase = document.getElementById('uppercase').checked;
+    const digits = document.getElementById('digits').checked;
+    const special = document.getElementById('special').checked;
+    
+    if (!lowercase && !uppercase && !digits && !special) {
+        alert('Ошибка: Выберите хотя бы один тип символов!');
+        return;
+    }
+    const generateBtn = document.querySelector('.btn[onclick="generatePassword()"]');
     
     try {
         // Показываем индикатор загрузки
