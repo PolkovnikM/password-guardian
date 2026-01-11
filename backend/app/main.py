@@ -1,6 +1,6 @@
 """
 Password Guardian API
-Простой менеджер паролей с генерацией и проверкой
+Главный файл FastAPI приложения
 """
 
 from fastapi import FastAPI
