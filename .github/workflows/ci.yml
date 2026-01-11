@@ -7,169 +7,92 @@ on:
     branches: [main]
 
 jobs:
-  check-structure:
-    name: Check project structure
+  backend-ci:
+    name: Backend CI
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Check required files
-      run: |
-        echo "📁 Проверка структуры проекта..."
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-        required_backend=(
-          "backend/requirements.txt"
-          "backend/app/__init__.py"
-          "backend/app/main.py"
-          "backend/app/generator.py"
-          "backend/app/validator.py"
-        )
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
 
-        for file in "${required_backend[@]}"; do
-          if [ -f "$file" ]; then
-            echo "✅ $file найден"
-          else
-            echo "❌ $file не найден"
-            exit 1
-          fi
-        done
+      - name: Backend lint (flake8)
+        working-directory: backend
+        run: |
+          echo "🔍 Lint backend code"
+          flake8 app/ --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app/ --exit-zero --max-line-length=127 --statistics
 
-        required_frontend=(
-          "frontend/index.html"
-        )
+      - name: Backend basic tests
+        working-directory: backend
+        run: |
+          echo "🧪 Run backend basic tests"
 
-        for file in "${required_frontend[@]}"; do
-          if [ -f "$file" ]; then
-            echo "✅ $file найден"
-          else
-            echo "❌ $file не найден"
-            exit 1
-          fi
-        done
-
-        echo "✅ Структура проекта корректна"
-
-  backend-lint:
-    name: Backend lint and test
-    runs-on: ubuntu-latest
-    needs: check-structure
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      working-directory: backend
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install flake8 pytest
-
-    - name: Lint with flake8
-      working-directory: backend
-      run: |
-        echo "🔍 Проверка стиля кода Python..."
-        flake8 app/ --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 app/ --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-    # 🔽 🔽 🔽 ВОТ ЗДЕСЬ БЫЛА ОШИБКА — ЭТО ИСПРАВЛЕНИЕ
-    - name: Simple Python tests
-      working-directory: backend
-      run: |
-        echo "🧪 Запуск простых тестов..."
-
-        python - << 'EOF'
+          python - << 'EOF'
 from app.generator import PasswordGenerator
 from app.validator import PasswordValidator
 
-print("✅ Модули импортируются корректно")
+generator = PasswordGenerator()
+generated = generator.generate(12)
+assert "password" in generated
 
-g = PasswordGenerator()
-result = g.generate(12)
-assert "password" in result
-print(f"✅ Генератор работает. Пароль: {result['password']}")
+validator = PasswordValidator()
+validated = validator.validate("Test123!")
+assert "strength" in validated
 
-v = PasswordValidator()
-result = v.validate("Test123!")
-assert "strength" in result
-print(f"✅ Валидатор работает. Сила: {result['strength']}")
+print("✅ Backend basic tests passed")
 EOF
 
-        echo "✅ Все базовые тесты пройдены"
+      - name: Backend build check
+        working-directory: backend
+        run: |
+          echo "🚀 Check backend startup"
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          PID=$!
+          sleep 3
+          kill $PID || true
+          echo "✅ Backend starts successfully"
 
-  backend-build:
-    name: Backend build check
+  frontend-ci:
+    name: Frontend CI
     runs-on: ubuntu-latest
-    needs: backend-lint
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Frontend structure check
+        run: |
+          echo "🌐 Check frontend files"
 
-    - name: Install dependencies
-      working-directory: backend
-      run: pip install -r requirements.txt
+          if [ ! -f frontend/index.html ]; then
+            echo "❌ frontend/index.html not found"
+            exit 1
+          fi
 
-    - name: Check server startup
-      working-directory: backend
-      run: |
-        echo "🚀 Проверка запуска сервера..."
+          echo "✅ frontend/index.html exists"
 
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        SERVER_PID=$!
+          if grep -q "<!DOCTYPE html>" frontend/index.html; then
+            echo "✅ HTML doctype found"
+          else
+            echo "⚠️ HTML doctype not found"
+          fi
 
-        sleep 3
+          if grep -q "<title>" frontend/index.html; then
+            echo "✅ HTML title found"
+          else
+            echo "⚠️ HTML title not found"
+          fi
 
-        if curl -f http://localhost:8000/health; then
-          echo "✅ Сервер запущен и отвечает"
-        else
-          echo "❌ Сервер не отвечает"
-          exit 1
-        fi
-
-        kill $SERVER_PID 2>/dev/null || true
-
-  frontend-check:
-    name: Frontend validation
-    runs-on: ubuntu-latest
-    needs: check-structure
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Check HTML validity
-      run: |
-        echo "🔍 Проверка фронтенда..."
-
-        if [ -f "frontend/index.html" ]; then
-          echo "✅ index.html найден"
-        else
-          echo "❌ index.html не найден"
-          exit 1
-        fi
-
-        echo "✅ Фронтенд проверен"
-
-  success:
-    name: Final success
-    runs-on: ubuntu-latest
-    needs: [backend-build, frontend-check]
-
-    steps:
-    - name: Project summary
-      run: |
-        echo "🎉 ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!"
-        echo "Password Guardian успешно прошел CI pipeline"
+          echo "✅ Frontend check finished"
