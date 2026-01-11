@@ -33,9 +33,9 @@ jobs:
         
         for file in "${required_files[@]}"; do
           if [ -f "$file" ]; then
-            echo "✅ $file найден"
+            echo "$file найден"
           else
-            echo "❌ $file не найден"
+            echo "$file не найден"
             exit 1
           fi
         done
@@ -58,7 +58,7 @@ jobs:
     
     - name: Lint Python files
       run: |
-        echo "🔍 Проверка стиля кода Python..."
+        echo "Проверка стиля кода Python..."
         cd backend
         flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
@@ -85,7 +85,7 @@ jobs:
     
     - name: Run simple tests
       run: |
-        echo "🧪 Запуск тестов..."
+        echo "Запуск тестов..."
         cd backend
         
         # Тест 1: Проверка импорта модулей
@@ -166,7 +166,7 @@ print(f'Валидатор работает. Оценка: {result[\"score\"]}')
     steps:
     - name: Final report
       run: |
-        echo "🎉 ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!"
+        echo "ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ!"
         echo ""
         echo "Статистика проекта:"
         echo "- Python файлов: $(find . -name "*.py" | wc -l)"
