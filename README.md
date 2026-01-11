@@ -43,6 +43,10 @@ py -m uvicorn app.main:app --reload
 
 ```
 
+### Запуск фронта
+
+открыть файл "index" в папке "frontend"
+
 ###  Структура проекта
 
 password-guardian/
