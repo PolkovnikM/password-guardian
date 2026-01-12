@@ -79,7 +79,6 @@ function switchTab(tabName) {
 
 // Генерация пароля
 async function generatePassword() {
-    // === ВАЖНО: ПРОВЕРКА ГАЛОЧЕК ===
     const lowercase = document.getElementById('lowercase').checked;
     const uppercase = document.getElementById('uppercase').checked;
     const digits = document.getElementById('digits').checked;
@@ -88,7 +87,7 @@ async function generatePassword() {
     // Проверяем что выбрана хотя бы одна галочка
     if (!lowercase && !uppercase && !digits && !special) {
         alert(' Ошибка! Выберите хотя бы один тип символов.');
-        return; // Выходим из функции
+        return; 
     }
     
     const length = parseInt(document.getElementById('length').value);
@@ -100,7 +99,7 @@ async function generatePassword() {
     
     try {
         // Показываем индикатор загрузки
-        generateBtn.innerHTML = '⏳ Генерация...';
+        generateBtn.innerHTML = 'Генерация...';
         generateBtn.disabled = true;
         
         // Собираем параметры для API
