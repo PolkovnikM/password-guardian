@@ -31,7 +31,7 @@ validator = PasswordValidator()
 def home():
     """Главная страница API"""
     return {
-        "message": "🔐 Password Guardian API",
+        "message": "Password Guardian API",
         "version": "1.0.0",
         "endpoints": {
             "/api/generate": "Генерация пароля (GET параметры: length, lowercase, uppercase, digits, special)",
