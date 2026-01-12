@@ -8,7 +8,6 @@ import string
 class PasswordGenerator:
     def generate(self, length=12, lowercase=True, uppercase=True, 
                  digits=True, special=False):
-        """Генерирует пароль с настройками"""
         
         # Собираем символы для генерации
         chars = ""
