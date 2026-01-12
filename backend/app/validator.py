@@ -6,7 +6,6 @@ import re
 
 class PasswordValidator:
     def validate(self, password):
-        """Проверяет пароль и возвращает оценку"""
         score = 0
         feedback = []
         
@@ -45,13 +44,13 @@ class PasswordValidator:
         
         # Определяем уровень безопасности
         if score >= 6:
-            strength = "💪 Очень надежный"
+            strength = "Очень надежный"
         elif score >= 4:
-            strength = "👍 Надежный"
+            strength = "Надежный"
         elif score >= 2:
-            strength = "⚠️  Средний"
+            strength = "Средний"
         else:
-            strength = "🚨 Слабый"
+            strength = "Слабый"
         
         return {
             "password": password,
